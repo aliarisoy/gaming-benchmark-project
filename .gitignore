@@ -1,0 +1,43 @@
+# ---- RigSight ----
+# Local runtime data, never commit
+artifacts/
+*.log
+
+# PresentMon binary is downloaded by scripts/setup-dev.ps1 (third-party, MIT)
+tools/presentmon/*
+!tools/presentmon/.gitkeep
+
+# ---- .NET ----
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+[Tt]est[Rr]esults/
+*.nupkg
+
+# ---- Android / Gradle ----
+.gradle/
+**/local.properties
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.jks
+*.keystore
+android/.idea/
+android/**/.idea/
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

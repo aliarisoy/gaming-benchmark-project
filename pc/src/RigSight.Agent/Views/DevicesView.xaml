@@ -1,0 +1,218 @@
+<UserControl x:Class="RigSight.Agent.Views.DevicesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,4,0">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Phone" Style="{StaticResource H1}" />
+                    <TextBlock Text="Pair once. The PC owns recording; the phone gets prompts, live metrics, and history."
+                               Style="{StaticResource Body}" Margin="0,4,0,0" />
+                </StackPanel>
+                <Border Style="{StaticResource Chip}" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DeviceCountText}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" />
+                </Border>
+            </Grid>
+
+            <Border Margin="0,16,0,0" Padding="12,9" CornerRadius="9"
+                    Background="#351A20" BorderBrush="#5A2831" BorderThickness="1"
+                    Visibility="{Binding HasTransportError, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding TransportError}" FontSize="11.5" Foreground="{StaticResource DangerBrush}"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.05*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="PAIRING CODE" Style="{StaticResource Overline}" />
+                        <TextBlock Text="Enter this on your phone"
+                                   Style="{StaticResource H2}" Margin="0,5,0,0" />
+
+                        <Border Background="{StaticResource SurfaceAltBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="18,20" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="{Binding PairingCode}"
+                                           FontFamily="{StaticResource MonoFont}"
+                                           FontSize="42"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding PairingExpiryText}"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource TextFaintBrush}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource PrimaryButton}" Content="Regenerate code"
+                                    Command="{Binding RegeneratePairingCodeCommand}" />
+                            <Button Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Content="Copy code"
+                                    Command="{Binding CopyPairingCodeCommand}" />
+                        </StackPanel>
+
+                        <Border Style="{StaticResource Divider}" Margin="0,20,0,0" />
+
+                        <TextBlock Text="HOW TO CONNECT" Style="{StaticResource Overline}" Margin="0,18,0,0" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="23" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="19" Height="19" CornerRadius="10" Background="{StaticResource SurfaceAltBrush}" VerticalAlignment="Top">
+                                <TextBlock Text="1" FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextDimBrush}" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Open RigSight on Android and choose Scan for nearby PCs."
+                                       FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource TextDimBrush}" LineHeight="18" />
+                        </Grid>
+                        <Grid Margin="0,9,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="23" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="19" Height="19" CornerRadius="10" Background="{StaticResource SurfaceAltBrush}" VerticalAlignment="Top">
+                                <TextBlock Text="2" FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextDimBrush}" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Pick this PC, then type the six-digit code. Wi-Fi is used automatically when available."
+                                       FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource TextDimBrush}" LineHeight="18" />
+                        </Grid>
+                        <Grid Margin="0,9,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="23" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="19" Height="19" CornerRadius="10" Background="{StaticResource SurfaceAltBrush}" VerticalAlignment="Top">
+                                <TextBlock Text="3" FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextDimBrush}" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Keep the phone app or its background service running to receive game prompts."
+                                       FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource TextDimBrush}" LineHeight="18" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding PairingNote}" Margin="0,16,0,0" FontSize="10.5"
+                                   TextWrapping="Wrap" Foreground="{StaticResource TextFaintBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="CONNECTION" Style="{StaticResource Overline}" />
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Wi-Fi WebSocket" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding WsStatusText}" FontSize="10.5" Margin="0,2,0,0"
+                                               Foreground="{StaticResource TextFaintBrush}" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Style="{StaticResource ChipAccent}" Padding="8,3">
+                                    <TextBlock Text="{Binding WsModeChip}" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                            </Grid>
+                            <Grid Margin="0,13,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Bluetooth LE" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding BleStatusText}" FontSize="10.5" Margin="0,2,0,0"
+                                               Foreground="{StaticResource TextFaintBrush}" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Style="{StaticResource Chip}" Padding="8,3">
+                                    <TextBlock Text="PROMPTS + 1 HZ" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" />
+                                </Border>
+                            </Grid>
+
+                            <Border Style="{StaticResource Divider}" Margin="0,16,0,0" />
+
+                            <TextBlock Text="WI-FI ADDRESS" Style="{StaticResource Overline}" Margin="0,14,0,0" />
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding TransportDetail}" FontFamily="{StaticResource MonoFont}"
+                                           FontSize="11.5" Foreground="{StaticResource TextDimBrush}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Style="{StaticResource IconButton}" Width="28" Height="28"
+                                        ToolTip="Copy address" Command="{Binding CopyTransportUrlCommand}">
+                                    <TextBlock Text="&#xE8C8;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                                </Button>
+                            </Grid>
+                            <TextBlock Text="{Binding ClientCountText}" FontSize="10.5" Margin="0,8,0,0"
+                                       Foreground="{StaticResource TextFaintBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="PAIRED PHONES" Style="{StaticResource Overline}" />
+                                <Button Style="{StaticResource LinkButton}" Content="Revoke all" HorizontalAlignment="Right"
+                                        Command="{Binding RevokeAllDevicesCommand}"
+                                        Visibility="{Binding HasDevices, Converter={StaticResource BoolToVis}}" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding Devices}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="36" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource SurfaceAltBrush}"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE8EA;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextDimBrush}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="8,0,8,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding LastSeenLabel}" FontSize="10" Margin="0,2,0,0"
+                                                           Foreground="{StaticResource TextFaintBrush}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Style="{StaticResource GhostButton}" Content="Revoke"
+                                                    FontSize="10.5" Padding="8,5"
+                                                    Command="{Binding DataContext.RevokeDeviceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Margin="0,14,0,4"
+                                        Visibility="{Binding HasDevices, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="No phones paired yet." FontSize="12" Foreground="{StaticResource TextDimBrush}" />
+                                <TextBlock Text="The six-digit code above expires after ten minutes."
+                                           FontSize="10.5" Foreground="{StaticResource TextFaintBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                        <StackPanel>
+                            <TextBlock Text="SECURITY" Style="{StaticResource Overline}" />
+                            <TextBlock Text="Pairing issues a random bearer token shared by Bluetooth and Wi-Fi. Revoking a phone invalidates both links immediately. No cloud account is involved."
+                                       Style="{StaticResource Muted}" Margin="0,7,0,0" LineHeight="18" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

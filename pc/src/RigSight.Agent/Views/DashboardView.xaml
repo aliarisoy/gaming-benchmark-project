@@ -1,0 +1,357 @@
+<UserControl x:Class="RigSight.Agent.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:RigSight.Agent.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,4,0">
+
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Dashboard" Style="{StaticResource H1}" />
+                    <TextBlock Text="Live sensors, the current session, and the link to your phone."
+                               Style="{StaticResource Body}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Style="{StaticResource SecondaryButton}"
+                            Content="Add game"
+                            Command="{Binding AddGameCommand}" />
+                    <Button Style="{StaticResource PrimaryButton}"
+                            Margin="8,0,0,0"
+                            Content="Start foreground game"
+                            Command="{Binding StartForegroundCommand}"
+                            IsEnabled="{Binding CanStartSession}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Session hero -->
+            <Border Style="{StaticResource Card}" Margin="0,20,0,0" Padding="22">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="360" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource ChipAccent}" Padding="8,3">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                 Fill="{StaticResource AccentBrush}" />
+                                        <TextBlock Text="{Binding SessionStateLabel}"
+                                                   Margin="6,0,0,0"
+                                                   FontSize="9.5"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource AccentBrush}" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{Binding SessionElapsed}"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="{StaticResource MonoFont}"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextDimBrush}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="{Binding SessionGame}"
+                                   Margin="0,14,0,0"
+                                   FontFamily="{StaticResource DisplayFont}"
+                                   FontSize="25"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding SessionSubtitle}"
+                                   Margin="0,3,0,0"
+                                   FontSize="11.5"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <TextBlock Text="{Binding LiveFpsValue}" Style="{StaticResource MetricBig}" />
+                            <TextBlock Text="FPS"
+                                       Margin="8,0,0,13"
+                                       VerticalAlignment="Bottom"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextFaintBrush}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="{Binding FrameTimeValue}" FontSize="14" FontWeight="SemiBold" />
+                            <TextBlock Text=" ms frame time" FontSize="11" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="  ·  " Foreground="{StaticResource TextFaintBrush}" />
+                            <TextBlock Text="{Binding Low1Value}" FontSize="14" FontWeight="SemiBold" />
+                            <TextBlock Text=" FPS 1% low" FontSize="11" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="Start foreground game"
+                                    Command="{Binding StartForegroundCommand}"
+                                    IsEnabled="{Binding CanStartSession}"
+                                    Visibility="{Binding IsIdle, Converter={StaticResource BoolToVis}}" />
+                            <Button Style="{StaticResource DangerButton}"
+                                    Content="Stop session"
+                                    Command="{Binding StopSessionCommand}"
+                                    Visibility="{Binding IsRecording, Converter={StaticResource BoolToVis}}" />
+                            <Button Style="{StaticResource GhostButton}"
+                                    Margin="6,0,0,0"
+                                    Content="Run demo"
+                                    Command="{Binding StartDemoCommand}"
+                                    Visibility="{Binding IsIdle, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+
+                        <TextBlock Text="Waiting for the PC or phone to confirm…"
+                                   Margin="0,18,0,0"
+                                   FontSize="12"
+                                   Foreground="{StaticResource WarningBrush}"
+                                   Visibility="{Binding IsPrompting, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+
+                    <Grid Grid.Column="1" Margin="26,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <TextBlock Text="FRAME RATE · LAST 2 MINUTES" Style="{StaticResource Overline}" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Ellipse Width="6" Height="6" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="FPS" Margin="5,0,12,0" FontSize="10" Foreground="{StaticResource TextFaintBrush}" />
+                                <Ellipse Width="6" Height="6" Fill="{StaticResource VioletBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="1% low" Margin="5,0,0,0" FontSize="10" Foreground="{StaticResource TextFaintBrush}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <controls:TelemetryChart Grid.Row="1"
+                                                 Margin="0,8,0,0"
+                                                 Height="160"
+                                                 Values="{Binding FpsSeriesValues}"
+                                                 SecondaryValues="{Binding LowSeriesValues}"
+                                                 EmptyText="Start a session to graph frame rate"
+                                                 ValueSuffix=" FPS" />
+
+                        <Grid Grid.Row="2" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="FRAME TIME" Style="{StaticResource Overline}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding FrameTimeValue}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text=" ms" FontSize="11" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="1% LOW" Style="{StaticResource Overline}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding Low1Value}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text=" FPS" FontSize="11" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="0.1% LOW" Style="{StaticResource Overline}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding Low01Value}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text=" FPS" FontSize="11" Foreground="{StaticResource TextFaintBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Safe mode / transport warnings -->
+            <Border Margin="0,12,0,0" Padding="12,9" CornerRadius="9"
+                    Background="#2A2415" BorderBrush="#5A4A22" BorderThickness="1"
+                    Visibility="{Binding SensorWarning, Converter={StaticResource StringToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                               Foreground="{StaticResource WarningBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SensorWarning}" FontSize="11.5" Foreground="{StaticResource WarningBrush}"
+                               TextWrapping="Wrap" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Metric cards -->
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="GPU" Style="{StaticResource Overline}" />
+                            <TextBlock Text="{Binding SensorMode}" HorizontalAlignment="Right"
+                                       FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource TextFaintBrush}" />
+                        </Grid>
+                        <TextBlock Text="{Binding GpuName}" Margin="0,5,0,0" FontSize="11.5"
+                                   Foreground="{StaticResource TextDimBrush}" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding GpuName}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="{Binding GpuTempValue}" Style="{StaticResource Metric}" />
+                            <TextBlock Text="°C" Margin="3,0,0,4" VerticalAlignment="Bottom" FontSize="12"
+                                       Foreground="{StaticResource TextFaintBrush}" />
+                        </StackPanel>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="LOAD" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding GpuLoadValue}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="POWER" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding GpuPowerValue}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="CPU" Style="{StaticResource Overline}" />
+                        </Grid>
+                        <TextBlock Text="{Binding CpuName}" Margin="0,5,0,0" FontSize="11.5"
+                                   Foreground="{StaticResource TextDimBrush}" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding CpuName}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="{Binding CpuTempValue}" Style="{StaticResource Metric}" />
+                            <TextBlock Text="°C" Margin="3,0,0,4" VerticalAlignment="Bottom" FontSize="12"
+                                       Foreground="{StaticResource TextFaintBrush}" />
+                        </StackPanel>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="LOAD" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding CpuLoadValue}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="POWER" Style="{StaticResource Overline}" />
+                                <TextBlock Text="{Binding CpuPowerValue}" FontSize="13" FontWeight="SemiBold" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="MEMORY" Style="{StaticResource Overline}" />
+                        <TextBlock Text="Video + system" Margin="0,5,0,0" FontSize="11.5"
+                                   Foreground="{StaticResource TextDimBrush}" />
+                        <StackPanel Margin="0,12,0,0">
+                            <TextBlock Text="{Binding VramText}" FontSize="19" FontWeight="SemiBold" />
+                            <TextBlock Text="VRAM" Style="{StaticResource Overline}" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <StackPanel Margin="0,11,0,0">
+                            <TextBlock Text="{Binding RamText}" FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock Text="SYSTEM RAM" Style="{StaticResource Overline}" Margin="0,3,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="CONNECTION" Style="{StaticResource Overline}" />
+                        <TextBlock Text="{Binding TransportLabel}" Margin="0,5,0,0" FontSize="19"
+                                   FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Text="{Binding ClientCountText}" Margin="0,4,0,0" FontSize="11.5"
+                                   Foreground="{StaticResource TextDimBrush}" />
+                        <StackPanel Margin="0,11,0,0">
+                            <TextBlock Text="{Binding WsStatusText}" FontSize="10.5"
+                                       Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding BleStatusText}" FontSize="10.5" Margin="0,3,0,0"
+                                       Foreground="{StaticResource TextFaintBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button Style="{StaticResource LinkButton}" Content="Pair a phone →"
+                                Command="{Binding OpenPairingCommand}" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- First-run checklist -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0"
+                    Visibility="{Binding ShowSetup, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="FINISH SETUP" Style="{StaticResource Overline}" />
+                        <TextBlock Text="Add your first game" Style="{StaticResource H2}" Margin="0,5,0,0" />
+                        <TextBlock Text="RigSight watches only the games you add. When one launches, the PC and phone ask before recording."
+                                   Style="{StaticResource Body}" Margin="0,4,0,0" MaxWidth="620" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Style="{StaticResource SecondaryButton}" Content="Pair phone"
+                                Command="{Binding OpenPairingCommand}" />
+                        <Button Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Content="Add game"
+                                Command="{Binding AddGameCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Activity -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock Text="RECENT ACTIVITY" Style="{StaticResource Overline}" />
+                        <Button Style="{StaticResource LinkButton}" Content="Clear"
+                                Command="{Binding ClearActivityCommand}" HorizontalAlignment="Right" />
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" MaxHeight="128" Margin="0,8,0,0"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Activity}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="58" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Time}" FontFamily="{StaticResource MonoFont}"
+                                                   FontSize="10.5" Foreground="{StaticResource TextFaintBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Message}" FontSize="11.5"
+                                                   TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontSize" Value="11.5" />
+                                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                                    <Setter Property="Foreground" Value="{StaticResource TextDimBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
