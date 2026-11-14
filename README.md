@@ -81,7 +81,10 @@ tools/presentmon/       PresentMon binary (downloaded, not committed)
 # 2. Build and run the PC agent (UAC prompt: elevation is required for CPU sensors)
 .\scripts\run-agent.ps1
 
-# 3. Build the Android APK
+# 3. Optional: create Desktop and Start Menu shortcuts
+.\scripts\install-shortcuts.ps1
+
+# 4. Build the Android APK
 .\scripts\build-android.ps1
 
 # Or build and install it on a USB-connected phone
@@ -90,7 +93,8 @@ tools/presentmon/       PresentMon binary (downloaded, not committed)
 
 The agent needs administrator rights for CPU package temperature/power through
 LibreHardwareMonitor. Without elevation it still runs in **safe mode** with GPU-only
-telemetry. See [docs/setup.md](docs/setup.md).
+telemetry. Closing the window hides it to the notification area; use the tray icon to
+reopen it or to exit. See [docs/setup.md](docs/setup.md).
 
 ## Demo mode
 

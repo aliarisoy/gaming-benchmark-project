@@ -63,6 +63,30 @@ Useful switches:
 The same flags exist on the executable (`--demo`, `--no-ble`, `--port`); the script
 is just a build-and-launch wrapper.
 
+## Shortcuts
+
+Create a Desktop shortcut and a Start Menu entry:
+
+```powershell
+.\scripts\install-shortcuts.ps1
+```
+
+Both launch the built agent and show the normal UAC prompt, because the executable
+requests administrator rights for full CPU sensors. The Start Menu entry can be
+pinned to Start or the taskbar. Remove both with:
+
+```powershell
+.\scripts\install-shortcuts.ps1 -Remove
+```
+
+The shortcuts point at the current build output (`Debug` by default; pass
+`-Configuration Release` for a Release build). Re-run the script after moving the
+repository or switching configurations.
+
+The agent is a tray app: closing the main window hides it to the notification area
+(look for the mint **R**, possibly behind the **^** overflow). Double-click the icon
+to reopen it. Use **Exit RigSight** in its right-click menu to quit.
+
 Logs: `%LOCALAPPDATA%\RigSight\logs\agent-YYYYMMDD.log`.
 
 ## Build the Android app
