@@ -142,6 +142,18 @@ PresentMon needs ETW access. Running the agent elevated satisfies this. Alternat
 add your user to the **Performance Log Users** group and run the agent unelevated
 (CPU sensors may still require elevation).
 
+## Recording behavior
+
+Recording starts only after you accept a prompt on the PC or phone. While a session
+is active, RigSight pauses recording automatically when the tracked game is minimized
+or no longer the foreground window. Paused time is not appended to `samples.jsonl`
+and does not contribute to FPS, frame-time, load, temperature, or power statistics.
+
+Recording resumes when the game window is focused again. The session itself stays
+open, so alt-tabbing does not split one play session into several reports. A short
+settle period after resuming is skipped while PresentMon rebuilds its live frame
+window, which prevents a false FPS dip at the start of the resumed segment.
+
 ## PresentMon and anti-cheat
 
 PresentMon is not an overlay and does not inject into game processes. It consumes

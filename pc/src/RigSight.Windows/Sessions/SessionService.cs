@@ -18,6 +18,8 @@ public enum SessionState { Idle, Prompting, Recording }
 /// </summary>
 public sealed class SessionService : IAsyncDisposable
 {
+    private const int ResumeSettleMs = 1500;
+
     private readonly ConfigStore _config;
     private readonly SessionStore _store;
     private readonly GameWatcher _watcher;
@@ -45,6 +47,8 @@ public sealed class SessionService : IAsyncDisposable
     private Task? _samplerTask;
     private TelemetrySample? _lastSample;
     private bool _disposed;
+    private volatile bool _recordingPaused;
+    private long _resumeSettleUntilMs;
 
     public SessionService(
         ConfigStore config,
@@ -67,6 +71,7 @@ public sealed class SessionService : IAsyncDisposable
     public PromptInfo? PendingPrompt { get { lock (_gate) return _pendingPrompt; } }
     public TelemetrySample? LastSample { get { lock (_gate) return _lastSample?.Clone(); } }
     public bool IsDemo { get { lock (_gate) return _demo; } }
+    public bool IsRecordingPaused => _recordingPaused;
     public HardwareSnapshot LatestHardware => _sensors.Latest;
     public IReadOnlyList<TelemetrySample> RecentSamples { get { lock (_gate) return _recent.ToArray(); } }
 
@@ -76,6 +81,7 @@ public sealed class SessionService : IAsyncDisposable
     public event Action<SessionSummary>? SessionEnded;
     public event Action<TelemetrySample>? SampleProduced;
     public event Action<SessionState>? StateChanged;
+    public event Action<bool>? RecordingPausedChanged;
     public event Action<string>? Notice;
 
     public TransportSnapshot GetSnapshot()
@@ -327,6 +333,8 @@ public sealed class SessionService : IAsyncDisposable
         }
 
         _frameStats.Reset();
+        _recordingPaused = false;
+        _resumeSettleUntilMs = 0;
         _sessionClock.Restart();
         game.LastPlayedAt = DateTimeOffset.UtcNow;
         _config.Save();
@@ -341,7 +349,7 @@ public sealed class SessionService : IAsyncDisposable
 
         _samplerCts = new CancellationTokenSource();
         var token = _samplerCts.Token;
-        _samplerTask = Task.Run(() => SamplerLoopAsync(recorder, demo, token), token);
+        _samplerTask = Task.Run(() => SamplerLoopAsync(recorder, demo, pid, token), token);
 
         RaiseStateChanged();
         try { SessionStarted?.Invoke(recorder.Info); } catch (Exception ex) { Log.Error("SessionStarted handler failed.", ex); }
@@ -365,7 +373,7 @@ public sealed class SessionService : IAsyncDisposable
         return true;
     }
 
-    private async Task SamplerLoopAsync(SessionRecorder recorder, bool demo, CancellationToken ct)
+    private async Task SamplerLoopAsync(SessionRecorder recorder, bool demo, int pid, CancellationToken ct)
     {
         var interval = Math.Clamp(_config.Current.SampleIntervalMs, 250, 5000);
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(interval));
@@ -375,6 +383,30 @@ public sealed class SessionService : IAsyncDisposable
             {
                 if (State != SessionState.Recording) break;
                 var elapsed = _sessionClock.ElapsedMilliseconds;
+
+                if (!demo && pid > 0)
+                {
+                    // Alt-tabbing or minimizing stops the game from presenting frames.
+                    // Recording those idle seconds would drag averages and 1% lows down,
+                    // so pause until the game is the focused window again.
+                    if (!GameWindowState.IsActivelyPlayed(pid))
+                    {
+                        SetRecordingPaused(true);
+                        continue;
+                    }
+
+                    if (_recordingPaused)
+                    {
+                        SetRecordingPaused(false);
+                        _resumeSettleUntilMs = Environment.TickCount64 + ResumeSettleMs;
+                    }
+
+                    // Give PresentMon a moment to build a fresh one-second window;
+                    // otherwise the first sample after resuming reads as a fake 1-2 FPS dip.
+                    if (Environment.TickCount64 < _resumeSettleUntilMs)
+                        continue;
+                }
+
                 TelemetrySample sample;
                 if (demo)
                 {
@@ -428,6 +460,27 @@ public sealed class SessionService : IAsyncDisposable
             Log.Error("Sampler stopped unexpectedly.", ex);
             Notice?.Invoke($"Telemetry stopped: {ex.Message}");
         }
+    }
+
+    private void SetRecordingPaused(bool paused)
+    {
+        if (_recordingPaused == paused) return;
+        _recordingPaused = paused;
+        _frameStats.SetPaused(paused);
+
+        if (paused)
+        {
+            Log.Info("Recording paused; the game is minimized or in the background.");
+            Notice?.Invoke("Recording paused while the game is minimized or in the background. It resumes when the game is back in front.");
+        }
+        else
+        {
+            Log.Info("Recording resumed; the game is back in the foreground.");
+            Notice?.Invoke("Recording resumed.");
+        }
+
+        try { RecordingPausedChanged?.Invoke(paused); }
+        catch (Exception ex) { Log.Warn($"Recording pause handler failed: {ex.Message}"); }
     }
 
     private void OnPresentMonError(string message)
@@ -585,6 +638,8 @@ public sealed class SessionService : IAsyncDisposable
             _lastSample = null;
             _recent.Clear();
             _state = SessionState.Idle;
+            _recordingPaused = false;
+            _resumeSettleUntilMs = 0;
         }
         RaiseStateChanged();
     }

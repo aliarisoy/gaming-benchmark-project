@@ -59,6 +59,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _host.Sessions.SessionEnded += OnSessionEnded;
         _host.Sessions.SampleProduced += OnSampleProduced;
         _host.Sessions.StateChanged += OnStateChanged;
+        _host.Sessions.RecordingPausedChanged += OnRecordingPausedChanged;
         _host.Sessions.Notice += OnServiceNotice;
         _host.Hub.StatusChanged += OnTransportChanged;
         Log.LineWritten += OnLogLine;
@@ -121,6 +122,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     // Session hero
     [ObservableProperty] private bool _isRecording;
+    [ObservableProperty] private bool _isRecordingPaused;
     [ObservableProperty] private bool _isPrompting;
     [ObservableProperty] private string _sessionGame = "No active session";
     [ObservableProperty] private string _sessionSubtitle = "Games in your library ask before tracking.";
@@ -288,6 +290,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void OnSessionStarted(SessionInfo info) => Post(() =>
     {
         IsRecording = true;
+        IsRecordingPaused = false;
         IsPrompting = false;
         _pendingPrompt = null;
         _sessionStartedAt = info.StartedAt;
@@ -342,6 +345,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void OnSessionEnded(SessionSummary summary) => Post(() =>
     {
         IsRecording = false;
+        IsRecordingPaused = false;
         IsPrompting = false;
         SessionStateLabel = "SAVED";
         LastSessionText = $"{summary.GameName} · {summary.DurationLabel} · {Format.Number(summary.AvgFps)} avg FPS";
@@ -363,6 +367,30 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             case SessionState.Prompting:
                 SessionStateLabel = "PROMPT";
                 break;
+        }
+        UpdateStatusSummary();
+    });
+
+    private void OnRecordingPausedChanged(bool paused) => Post(() =>
+    {
+        if (!IsRecording)
+        {
+            IsRecordingPaused = false;
+            return;
+        }
+
+        IsRecordingPaused = paused;
+        if (paused)
+        {
+            SessionStateLabel = "PAUSED";
+            SessionSubtitle = "Game minimized or in the background · recording paused";
+            TrayStatus = $"{SessionGame} · paused";
+        }
+        else
+        {
+            SessionStateLabel = _host.Sessions.IsDemo ? "DEMO" : "LIVE";
+            SessionSubtitle = _host.Sessions.ActiveSession?.ExeName ?? "";
+            TrayStatus = $"{SessionGame} · {LiveFpsValue} FPS";
         }
         UpdateStatusSummary();
     });
@@ -423,7 +451,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         GpuAvailable = hw.GpuAvailable;
         SensorMode = hw.FullSensors ? "FULL SENSORS" : "SAFE MODE";
         SensorWarning = hw.Warning ?? "";
-        if (!IsRecording)
+        if (!IsRecording || IsRecordingPaused)
         {
             GpuTempValue = Format.Number(hw.GpuTempC);
             GpuLoadValue = Format.Number(hw.GpuLoadPct);
@@ -490,7 +518,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         var transport = WsRunning ? (WsLanAccessible ? "Wi-Fi" : "Wi-Fi local only") : "offline";
         if (BleRunning) transport += " + BLE";
-        var mode = IsRecording ? SessionStateLabel : IsPrompting ? "Prompt open" : "Idle";
+        var mode = IsRecording
+            ? IsRecordingPaused ? "Paused" : SessionStateLabel
+            : IsPrompting ? "Prompt open" : "Idle";
         StatusSummary = $"{mode} · {transport} · {ClientCountText.ToLowerInvariant()}";
         if (!string.IsNullOrWhiteSpace(TransportError)) StatusSummary = $"Transport issue · {TransportError}";
     }
@@ -912,6 +942,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _host.Sessions.SessionEnded -= OnSessionEnded;
         _host.Sessions.SampleProduced -= OnSampleProduced;
         _host.Sessions.StateChanged -= OnStateChanged;
+        _host.Sessions.RecordingPausedChanged -= OnRecordingPausedChanged;
         _host.Sessions.Notice -= OnServiceNotice;
         _host.Hub.StatusChanged -= OnTransportChanged;
         Log.LineWritten -= OnLogLine;

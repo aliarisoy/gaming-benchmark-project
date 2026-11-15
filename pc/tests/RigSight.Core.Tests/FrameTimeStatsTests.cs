@@ -75,4 +75,44 @@ public sealed class FrameTimeStatsTests
         Assert.Null(stats.SessionAverageFps);
         Assert.Null(stats.Snapshot(500).Fps);
     }
+
+    [Fact]
+    public void PausedCapture_IgnoresFramesAndKeepsSessionStats()
+    {
+        var stats = new FrameTimeStats();
+        for (var i = 0; i < 60; i++) stats.AddFrame(10, i * 10);
+        var averageBefore = stats.SessionAverageFps;
+
+        stats.SetPaused(true);
+        for (var i = 0; i < 100; i++) stats.AddFrame(500, 1_000 + i * 500);
+
+        Assert.True(stats.IsPaused);
+        Assert.Equal(60, stats.SessionFrameCount);
+        Assert.Equal(averageBefore, stats.SessionAverageFps);
+        var snapshot = stats.Snapshot(60_000);
+        Assert.Null(snapshot.Fps);
+        Assert.Equal(60, snapshot.SessionFrameCount);
+    }
+
+    [Fact]
+    public void Resume_StartsLiveWindowFreshButKeepsSessionTotals()
+    {
+        var stats = new FrameTimeStats();
+        for (var i = 0; i < 60; i++) stats.AddFrame(10, i * 10);
+
+        stats.SetPaused(true);
+        stats.SetPaused(false);
+
+        var settled = stats.Snapshot(1_000);
+        Assert.Null(settled.Fps);
+        Assert.Equal(60, settled.SessionFrameCount);
+        Assert.InRange(stats.SessionAverageFps!.Value, 99.9, 100.1);
+
+        for (var i = 0; i < 30; i++) stats.AddFrame(20, 5_000 + i * 20);
+
+        var resumed = stats.Snapshot(5_600);
+        Assert.Equal(30, resumed.Fps!.Value, 3);
+        Assert.Equal(90, stats.SessionFrameCount);
+        Assert.InRange(stats.SessionAverageFps!.Value, 74, 76);
+    }
 }

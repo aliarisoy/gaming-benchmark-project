@@ -26,8 +26,15 @@ public sealed class FrameTimeStats
     private double _sessionFrameTimeSum;
     private long _lastFrameAtMs;
     private bool _hasFrames;
+    private bool _paused;
 
     private readonly record struct Frame(long AtMs, double FrameTimeMs);
+
+    /// <summary>
+    /// While paused, incoming frames are ignored and live windows are left frozen.
+    /// Session-wide counts and the histogram are deliberately preserved.
+    /// </summary>
+    public bool IsPaused { get { lock (_gate) return _paused; } }
 
     public void AddFrame(double frameTimeMs, long atMs)
     {
@@ -37,6 +44,8 @@ public sealed class FrameTimeStats
 
         lock (_gate)
         {
+            if (_paused) return;
+
             var frame = new Frame(atMs, frameTimeMs);
             _rolling.AddLast(frame);
             _recent.AddLast(frame);
@@ -60,15 +69,36 @@ public sealed class FrameTimeStats
             _recent.RemoveFirst();
     }
 
+    /// <summary>
+    /// Freezes frame ingestion. Used when the tracked game is minimized or loses
+    /// focus, so idle/paused frames do not pollute live or session statistics.
+    /// Session-wide counts and percentiles are kept; only the rolling windows reset.
+    /// </summary>
+    public void SetPaused(bool paused)
+    {
+        lock (_gate)
+        {
+            if (_paused == paused) return;
+            _paused = paused;
+            _rolling.Clear();
+            _recent.Clear();
+            _hasFrames = false;
+            _lastFrameAtMs = 0;
+        }
+    }
+
     public FrameSnapshot Snapshot(long nowMs)
     {
         lock (_gate)
         {
+            if (_paused)
+                return new FrameSnapshot(null, null, null, null, _sessionFrames);
+
             TrimOlderThan(nowMs - RollingWindowMs);
             while (_recent.First is { } first && first.Value.AtMs < nowMs - 2_000)
                 _recent.RemoveFirst();
 
-            if (!_hasFrames) return new FrameSnapshot(null, null, null, null, 0);
+            if (!_hasFrames) return new FrameSnapshot(null, null, null, null, _sessionFrames);
 
             // If PresentMon has gone quiet (paused game / capture failure), report 0 FPS
             // rather than freezing the last value forever.
@@ -157,6 +187,7 @@ public sealed class FrameTimeStats
             _sessionFrameTimeSum = 0;
             _lastFrameAtMs = 0;
             _hasFrames = false;
+            _paused = false;
         }
     }
 }

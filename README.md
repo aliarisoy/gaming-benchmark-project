@@ -30,6 +30,9 @@ validation.
   the raw JSONL files live on the PC.
 - If the phone sleeps, switches apps, or disconnects, PC recording continues. The
   Android foreground service keeps the connection alive in the background.
+- Recording pauses automatically when the tracked game is minimized or loses
+  foreground focus, then resumes when it returns. Paused time is not written to the
+  session and does not drag down FPS or telemetry averages.
 
 ## Architecture at a glance
 
