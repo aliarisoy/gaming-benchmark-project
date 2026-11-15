@@ -21,6 +21,7 @@ public sealed class BleServer : IAsyncDisposable
     private readonly PairingCoordinator _pairing;
     private readonly BleFrameCodec.Reassembler _reassembler = new();
     private readonly SemaphoreSlim _notifyGate = new(1, 1);
+    private readonly SemaphoreSlim _writeGate = new(1, 1);
     private readonly object _stateGate = new();
     private GattServiceProvider? _provider;
     private GattLocalCharacteristic? _eventCharacteristic;
@@ -128,9 +129,10 @@ public sealed class BleServer : IAsyncDisposable
 
     private void OnReadRequested(GattLocalCharacteristic sender, GattReadRequestedEventArgs args)
     {
+        // WinRT deferrals must be acquired synchronously on the event thread.
+        var deferral = args.GetDeferral();
         _ = Task.Run(async () =>
         {
-            using var deferral = args.GetDeferral();
             try
             {
                 var request = await args.GetRequestAsync();
@@ -150,6 +152,10 @@ public sealed class BleServer : IAsyncDisposable
             catch (Exception ex)
             {
                 Log.Warn($"BLE read request failed: {ex.Message}");
+            }
+            finally
+            {
+                deferral.Complete();
             }
         });
     }
@@ -172,39 +178,53 @@ public sealed class BleServer : IAsyncDisposable
 
     private void OnWriteRequested(GattLocalCharacteristic sender, GattWriteRequestedEventArgs args)
     {
+        // Acquire the deferral before returning from the event; taking it inside
+        // Task.Run throws "A method was called at an unexpected time" on WinRT.
+        var deferral = args.GetDeferral();
         _ = Task.Run(async () =>
         {
             GattWriteRequest? request = null;
-            using var deferral = args.GetDeferral();
             try
             {
-                request = await args.GetRequestAsync();
-                if (request is null) return;
-                var bytes = ReadBuffer(request.Value);
-                var json = _reassembler.Add(bytes);
-                if (json is not null)
+                await _writeGate.WaitAsync();
+                try
                 {
-                    var message = ProtocolJson.Deserialize(json);
-                    if (message is null)
+                    request = await args.GetRequestAsync();
+                    if (request is null) return;
+                    var bytes = ReadBuffer(request.Value);
+                    var json = _reassembler.Add(bytes);
+                    if (json is not null)
                     {
-                        await NotifyAllAsync(new WireMessage
+                        var message = ProtocolJson.Deserialize(json);
+                        if (message is null)
                         {
-                            Type = MessageTypes.Error, Code = "bad_json", Message = "Invalid BLE message.",
-                        });
+                            await NotifyAllAsync(new WireMessage
+                            {
+                                Type = MessageTypes.Error, Code = "bad_json", Message = "Invalid BLE message.",
+                            });
+                        }
+                        else
+                        {
+                            await HandleMessageAsync(message);
+                        }
                     }
-                    else
-                    {
-                        await HandleMessageAsync(message);
-                    }
-                }
 
-                if (request.Option == GattWriteOption.WriteWithResponse)
-                    request.Respond();
+                    if (request.Option == GattWriteOption.WriteWithResponse)
+                        request.Respond();
+                }
+                finally
+                {
+                    _writeGate.Release();
+                }
             }
             catch (Exception ex)
             {
                 Log.Warn($"BLE write failed: {ex.Message}");
                 try { request?.Respond(); } catch { /* ignore */ }
+            }
+            finally
+            {
+                deferral.Complete();
             }
         });
     }
@@ -387,6 +407,7 @@ public sealed class BleServer : IAsyncDisposable
     {
         await StopAsync();
         _notifyGate.Dispose();
+        _writeGate.Dispose();
     }
 
     private sealed class BleTransportClient : ITransportClient
