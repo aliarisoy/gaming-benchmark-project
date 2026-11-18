@@ -3,6 +3,17 @@
 artifacts/
 *.log
 
+# Accidental copies of secrets or local runtime state
+*.pem
+*.key
+*.pfx
+.env
+.env.*
+!.env.example
+/config.json
+/sessions.db
+/sessions/
+
 # PresentMon binary is downloaded by scripts/setup-dev.ps1 (third-party, MIT)
 tools/presentmon/*
 !tools/presentmon/.gitkeep
